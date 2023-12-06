@@ -1,36 +1,47 @@
 import { FieldValues, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import categories from "../categories";
 
-// interface FormProps {
-//   listItems: [];
-//   onSubmit: (data: FieldValues) => void;
-// }
+interface FormProps {
+  //listItems: [];
+  onSubmit: (data: FormData) => void;
+}
 
-const Form = (/*{listItems, onSubmit}: FormProps*/) => {
-  const schema = z.object({
-    description: z.string().min(3, { message: "Description should be at least 3 characters." }),
-    amount: z.number().min(1),
-    category: z.string({ invalid_type_error: "Category is required." }), //must be in the list
-  });
+const schema = z.object({
+  description: z
+    .string()
+    .min(3, { message: "Description should be at least 3 characters." })
+    .max(50, { message: "Description not exceed 50 characters." }),
+  amount: z
+    .number({ invalid_type_error: "Amount is required" })
+    .min(0.01)
+    .max(100_000),
+  category: z.enum(categories, {
+    errorMap: () => ({
+      message: "Description should be at least 3 characters.",
+    }), //must be in the list
+  }),
+});
 
-  type FormData = z.infer<typeof schema>;
-  // console.log(FormData);
+type FormData = z.infer<typeof schema>;
 
+const Form = ({ onSubmit }: FormProps) => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  //console.log(errors);
-
   //const onSubmit = (data: FieldValues) => console.log(data);
-//add data to listItems
-
+  //add data to listItems
 
   return (
-    <form /*onSubmit={handleSubmit(onSubmit)}*/>
+    <form onSubmit={handleSubmit(data => {
+      onSubmit(data);
+      reset();
+    })}>
       <div className="mb-3">
         <label htmlFor="description" className="form-label">
           Description
@@ -66,9 +77,11 @@ const Form = (/*{listItems, onSubmit}: FormProps*/) => {
           id="category"
           className="form-control"
         >
-          <option value="groceries">Groceries</option>
-          <option value="utilities">Utilities</option>
-          <option value="entertainment">Entertainment</option>
+          <option value=""></option>
+
+          {categories.map((category) => (
+            <option key={category} value={category}>{category}</option>
+          ))}
         </select>
 
         {errors.category && (
